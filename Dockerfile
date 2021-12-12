@@ -2,8 +2,7 @@
 # FROM golang:1.14-alpine
 
 # use for Pi
-ARG ARCH=
-FROM ${ARCH}golang:1.16-stretch
+FROM linux/arm/v7/golang:1.16-stretch
 
 LABEL description="Image for 32 degrees server"
 
