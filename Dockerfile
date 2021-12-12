@@ -1,21 +1,13 @@
-FROM alpine:3.13
+FROM golang:1.14-alpine
 
 LABEL description="Image for 32 degrees server"
 
-RUN addgroup -S app && adduser -S -G app app
-RUN apk --update upgrade && \
-    apk add ca-certificates && \
-    update-ca-certificates && \
-    apk add su-exec && \
-    apk add curl && \
-    rm -rf /var/cache/apk/*
+RUN mkdir /go/src/32-degrees
 
-RUN apk add --no-cache tzdata
+WORKDIR /go/src/32-degrees
+COPY . .
 
-RUN mkdir /home/app/bin
-COPY ./main /home/app/bin/
-COPY ./entrypoint.sh /home/app/bin/entrypoint.sh
+RUN go get -d -v ./...
+RUN go install -v ./...
 
-WORKDIR /home/app/bin
-
-CMD ["./entrypoint.sh"]
+CMD ["32-degrees"]
