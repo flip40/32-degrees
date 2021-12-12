@@ -2,7 +2,7 @@
 # FROM golang:1.14-alpine
 
 # use for Pi
-FROM 1.16-stretch
+FROM golang:1.16-stretch
 
 LABEL description="Image for 32 degrees server"
 
