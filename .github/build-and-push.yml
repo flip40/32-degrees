@@ -2,9 +2,7 @@ name: Build Image
 
 on:
   push:
-    branches: [ $default-branch ]
-  pull_request:
-    branches: [ $default-branch ]
+    branches: ['release']
 
 env:
   REGISTRY: ghcr.io
