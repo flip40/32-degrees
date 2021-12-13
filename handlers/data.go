@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"errors"
@@ -44,16 +44,11 @@ func DataFieldsFromRequest(r *http.Request) (*DataFields, error) {
 	return item, nil
 }
 
-type AddResponse struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
-}
-
 // TODO: remove these once stored in DB
 var temp, hum float64
 var source string
 
-func AddDataHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	fields, err := DataFieldsFromRequest(r)
 	if err != nil {
 		err := fmt.Sprintf("error: %s", err)
@@ -95,7 +90,7 @@ func AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("success"))
 }
 
-func GetDataHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(fmt.Sprintf("source: %s\ntempurature: %.1f\nhumidity: %.1f", source, temp, hum)))
 }
