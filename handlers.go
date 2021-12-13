@@ -68,19 +68,25 @@ func AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: remove these and save to DB instead
 	switch fields.Type {
 	case DataTypeTemperature:
+		fmt.Println("saving temperature to globals")
 		val, err := strconv.ParseFloat(fields.Value, 64)
 		if err != nil {
 			// TODO: log error
 		}
 		source = fields.Source
 		temp = val
+		fmt.Println("saved temperature to globals")
 	case DataTypeHumidity:
+		fmt.Println("saving humidity to globals")
 		val, err := strconv.ParseFloat(fields.Value, 64)
 		if err != nil {
 			// TODO: log error
 		}
 		source = fields.Source
 		hum = val
+		fmt.Println("saved humidity to globals")
+	default:
+		fmt.Printf("no match for fields.Type: %s\n", fields.Type)
 	}
 
 	// Response
@@ -91,5 +97,5 @@ func AddDataHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("source: %s\ntempurature: %f\nhumidity: %f", source, temp, hum)))
+	w.Write([]byte(fmt.Sprintf("source: %s\ntempurature: %.1f\nhumidity: %.1f", source, temp, hum)))
 }
