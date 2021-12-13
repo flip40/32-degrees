@@ -9,6 +9,7 @@ import (
 func main() {
 	// Setup Handlers
 	http.HandleFunc("/add", AddDataHandler)
+	http.HandleFunc("/get", GetDataHandler)
 
 	// Start Server
 	fmt.Printf("Starter server on port %d\n", Port)
