@@ -11,19 +11,19 @@ type DB struct {
 }
 
 // "user:password@/dbname"
-func NewConnection(dsn string) *DB {
+func NewConnection(dsn string) (*DB, error) {
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		panic(err.Error()) // TODO: Just for example purpose. You should use proper error handling instead of panic
+		return nil, err
 	}
 
 	// Open doesn't open a connection. Validate DSN data:
 	err = db.Ping()
 	if err != nil {
-		panic(err.Error()) // TODO: proper error handling instead of panic in your app
+		return nil, err
 	}
 
-	return &DB{db}
+	return &DB{db}, nil
 }
 
 type Data struct {

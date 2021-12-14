@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/flip40/32-degrees/handlers"
 	"github.com/flip40/32-degrees/mysql"
@@ -17,13 +18,24 @@ func main() {
 		fmt.Println("using default DSN")
 		dsn = DefaultDSN
 	}
-	db := mysql.NewConnection(dsn) // TODO: replace with docker env var
-	defer db.Close()
+
+	var database *mysql.DB
+	for {
+		db, err := mysql.NewConnection(dsn) // TODO: replace with docker env var
+		if err != nil {
+			fmt.Printf("failed to connect, %s\n", err)
+			fmt.Println("trying again in 5 seconds")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		defer db.Close()
+		break
+	}
 
 	// Setup Router and Handlers
 	router := NewRouter()
 	h := &handlers.Handler{
-		MySQL: db,
+		MySQL: database,
 	}
 
 	router.AddAPI(http.MethodGet, "/add", h.AddDataHandler)

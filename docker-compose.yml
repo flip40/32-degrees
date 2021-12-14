@@ -1,0 +1,22 @@
+services:
+  webserver:
+    image: ghcr.io/flip40/32-degrees:release
+    container_name: absolutezero
+    restart: always
+    ports:
+      - "8032:8032"
+    environment:
+      MYSQL_URL: "cleent:itscoldoutside@tcp(kelvin)/32degrees?parseTime=true"
+
+  db:
+    image: mysql
+    container_name: kelvin
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_USER: cleent
+      MYSQL_PASSWORD: itscoldoutside
+      MYSQL_ROOT_PASSWORD: itscoldoutside
+      MYSQL_DATABASE: 32degrees
+    ports:
+      - "3306:3306"
