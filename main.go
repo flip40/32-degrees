@@ -28,7 +28,8 @@ func main() {
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		defer db.Close()
+		database = db
+		defer database.Close()
 		break
 	}
 
