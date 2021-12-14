@@ -1,7 +1,9 @@
 package handlers
 
-import ()
+import (
+	"github.com/flip40/32-degrees/mysql"
+)
 
 type Handler struct {
-	// TODO: store DB conn here
+	MySQL *mysql.DB
 }

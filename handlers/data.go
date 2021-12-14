@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
+
+	"github.com/flip40/32-degrees/mysql"
 )
 
 const (
@@ -12,7 +14,7 @@ const (
 	AddDataFieldSource = "source"
 	AddDataFieldValue  = "value"
 
-	DataTypeTemperature = "tempurature"
+	DataTypeTemperature = "temperature"
 	DataTypeHumidity    = "humidity"
 )
 
@@ -29,6 +31,13 @@ func DataFieldsFromRequest(r *http.Request) (*DataFields, error) {
 	item.Type = q.Get(AddDataFieldType)
 	if item.Type == "" {
 		return nil, errors.New(fmt.Sprintf("query field '%s' is required", AddDataFieldType))
+	} else {
+		switch item.Type {
+		case DataTypeTemperature, DataTypeHumidity:
+			// OK
+		default:
+			return nil, errors.New(fmt.Sprintf("type '%s' is invalid", item.Type))
+		}
 	}
 
 	item.Source = q.Get(AddDataFieldSource)
@@ -44,10 +53,6 @@ func DataFieldsFromRequest(r *http.Request) (*DataFields, error) {
 	return item, nil
 }
 
-// TODO: remove these once stored in DB
-var temp, hum float64
-var source string
-
 func (h *Handler) AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	fields, err := DataFieldsFromRequest(r)
 	if err != nil {
@@ -60,28 +65,14 @@ func (h *Handler) AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	// Debug logging to console
 	fmt.Printf("%s: %s, %s: %s, %s: %s\n", AddDataFieldType, fields.Type, AddDataFieldSource, fields.Source, AddDataFieldValue, fields.Value)
 
-	// TODO: remove these and save to DB instead
-	switch fields.Type {
-	case DataTypeTemperature:
-		fmt.Println("saving temperature to globals")
-		val, err := strconv.ParseFloat(fields.Value, 64)
-		if err != nil {
-			// TODO: log error
-		}
-		source = fields.Source
-		temp = val
-		fmt.Println("saved temperature to globals")
-	case DataTypeHumidity:
-		fmt.Println("saving humidity to globals")
-		val, err := strconv.ParseFloat(fields.Value, 64)
-		if err != nil {
-			// TODO: log error
-		}
-		source = fields.Source
-		hum = val
-		fmt.Println("saved humidity to globals")
-	default:
-		fmt.Printf("no match for fields.Type: %s\n", fields.Type)
+	if _, err := h.MySQL.SaveData(&mysql.Data{
+		Source: fields.Source,
+		Type:   fields.Type,
+		Value:  fields.Value,
+	}); err != nil {
+		fmt.Printf("failed to save data, %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("failed to save data, %s", err)))
 	}
 
 	// Response
@@ -91,6 +82,20 @@ func (h *Handler) AddDataHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetDataHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := h.MySQL.GetData()
+	if err != nil {
+		fmt.Printf("failed to get data, %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("failed to get data, %s", err)))
+	}
+
+	response, err := json.Marshal(data)
+	if err != nil {
+		fmt.Printf("failed to marshal data, %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("failed to marshal data, %s", err)))
+	}
+
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("source: %s\ntempurature: %.1f\nhumidity: %.1f", source, temp, hum)))
+	w.Write(response)
 }
