@@ -138,6 +138,8 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(fmt.Sprintf("failed to get data, %s", err)))
 	}
 
+	loc, _ := time.LoadLocation("America/Los_Angeles") // TODO: move this value to constants
+
 	response := &PlotDataResponse{
 		Sources: make(map[string]*Values),
 	}
@@ -146,6 +148,8 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			source = &Values{}
 		}
+
+		localCreatedAt := row.CreatedAt.In(loc)
 
 		switch row.Type {
 		case DataTypeTemperature:
@@ -156,7 +160,7 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			source.Temperature.Values = append(source.Temperature.Values, value)
-			source.Temperature.Times = append(source.Temperature.Times, &row.CreatedAt)
+			source.Temperature.Times = append(source.Temperature.Times, &localCreatedAt)
 
 		case DataTypeHumidity:
 			value, err := strconv.ParseFloat(row.Value, 64)
@@ -165,7 +169,7 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			source.Humidity.Values = append(source.Humidity.Values, value)
-			source.Humidity.Times = append(source.Humidity.Times, &row.CreatedAt)
+			source.Humidity.Times = append(source.Humidity.Times, &localCreatedAt)
 		default:
 			continue
 		}
