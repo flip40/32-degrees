@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/flip40/32-degrees/mysql"
 )
@@ -98,4 +100,86 @@ func (h *Handler) GetDataHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
+}
+
+type PlotDataResponse struct {
+	Sources map[string]*Values `json:"sources"`
+}
+
+type Values struct {
+	Temperature PlotData `json:"temperature"`
+	Humidity    PlotData `json:"humidity"`
+}
+type PlotData struct {
+	Values []float64    `json:"values"`
+	Times  []*time.Time `json:"times"`
+}
+
+// {												// PlotDataResponse
+// 	"sources": {									// PlotDataResponse.Sources
+// 		"device_1": {								// Values
+// 			"temperature": [						// Values.Temperature / PlotData
+// 				"values": [70],						// PlotData.Values
+// 				"times": ["2021-12-18 21:08:00"]	// PlotData.Times
+// 			],
+// 			"humidity": [
+// 				"values": [100],
+// 				"times": ["2021-12-18 21:08:00"]
+// 			]
+// 		}
+// 	}
+// }
+
+func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
+	data, err := h.MySQL.GetData()
+	if err != nil {
+		fmt.Printf("failed to get data, %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("failed to get data, %s", err)))
+	}
+
+	response := &PlotDataResponse{
+		Sources: make(map[string]*Values),
+	}
+	for _, row := range data {
+		source, ok := response.Sources[row.Source]
+		if !ok {
+			source = &Values{}
+		}
+
+		switch row.Type {
+		case DataTypeTemperature:
+			value, err := strconv.ParseFloat(row.Value, 64)
+			if err != nil {
+				fmt.Printf("error converting float data: %s\n", err)
+				continue
+			}
+
+			source.Temperature.Values = append(source.Temperature.Values, value)
+			source.Temperature.Times = append(source.Temperature.Times, &row.CreatedAt)
+
+		case DataTypeHumidity:
+			value, err := strconv.ParseFloat(row.Value, 64)
+			if err != nil {
+				continue
+			}
+
+			source.Humidity.Values = append(source.Humidity.Values, value)
+			source.Humidity.Times = append(source.Humidity.Times, &row.CreatedAt)
+		default:
+			continue
+		}
+
+		response.Sources[row.Source] = source
+	}
+
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Printf("failed to marshal data, %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(fmt.Sprintf("failed to marshal data, %s", err)))
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(responseBytes)
 }

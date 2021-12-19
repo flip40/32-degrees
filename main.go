@@ -39,8 +39,10 @@ func main() {
 		MySQL: database,
 	}
 
+	router.AddAPI(http.MethodGet, "/", h.ShowDisplay)
 	router.AddAPI(http.MethodGet, "/add", h.AddDataHandler)
 	router.AddAPI(http.MethodGet, "/get", h.GetDataHandler)
+	router.AddAPI(http.MethodGet, "/plotdata", h.GetPlotDataHandler)
 
 	// Start Server
 	fmt.Printf("Started server on port %d\n", Port)

@@ -1,0 +1,61 @@
+<html>
+    <head>
+        <script src="https://cdn.plot.ly/plotly-2.6.3.min.js"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    </head>
+    <body>
+        <div id="tempDiv"></div>
+        <!-- <div id="humDiv"></div> -->
+        <script>
+            var plotData;
+            $.ajax({
+                url: "/plotdata",
+                // data: data,
+                success: function( data ) {
+                    plotData = data;
+                },
+                dataType: "json",
+                async: false,
+            });
+
+            var temperatureData = []
+            // var humidityData = []
+            for (const [name, source] of Object.entries(plotData.sources)) {
+                var temp = {
+                    x: source.temperature.times,
+                    y: source.temperature.values,
+                    type: 'scatter',
+                    name: name,
+                };
+                temperatureData.push(temp);
+
+                // var hum = {
+                //     x: source.humidity.times,
+                //     y: source.humidity.values,
+                //     type: 'scatter'
+                //     name: name,
+                // };
+                // humidityData.push(hum);
+            }
+
+            Plotly.newPlot('tempDiv', temperatureData, {
+                title: "Temperature over Time",
+                  xaxis: {
+                    title: 'Time'
+                },
+                yaxis: {
+                    title: 'Temperature'
+                }
+            });
+            // Plotly.newPlot('humDiv', {
+            //     title: "Humidity over Time",
+            //       xaxis: {
+            //         title: 'Time'
+            //     },
+            //     yaxis: {
+            //         title: 'Humidity'
+            //     }
+            // });
+        </script>
+    </body>
+</html>
