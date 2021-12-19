@@ -143,14 +143,26 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 	response := &PlotDataResponse{
 		Sources: make(map[string]*Values),
 	}
+
+	previousVals := make(map[string]map[string]string)
+
 	for _, row := range data {
 		source, ok := response.Sources[row.Source]
 		if !ok {
 			source = &Values{}
 		}
 
-		localCreatedAt := row.CreatedAt.In(loc)
+		// omit duplicate values in a row as a test of display
+		if prevSource, ok := previousVals[row.Source]; !ok {
+			previousVals[row.Source] = make(map[string]string)
+		} else {
+			if prevVal, ok := prevSource[row.Type]; ok && prevVal == row.Value {
+				continue
+			}
+		}
+		previousVals[row.Source][row.Type] = row.Value
 
+		localCreatedAt := row.CreatedAt.In(loc)
 		switch row.Type {
 		case DataTypeTemperature:
 			value, err := strconv.ParseFloat(row.Value, 64)
