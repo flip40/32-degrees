@@ -19,7 +19,7 @@
             });
 
             var temperatureData = []
-            // var humidityData = []
+            var humidityData = []
             for (const [name, source] of Object.entries(plotData.sources)) {
                 var temp = {
                     x: source.temperature.times,
@@ -30,14 +30,14 @@
                 };
                 temperatureData.push(temp);
 
-                // var hum = {
-                //     x: source.humidity.times,
-                //     y: source.humidity.values,
-                //     line: {shape: 'spline'},
-                //     type: 'scatter'
-                //     name: name,
-                // };
-                // humidityData.push(hum);
+                var hum = {
+                    x: source.humidity.times,
+                    y: source.humidity.values,
+                    line: {shape: 'spline'},
+                    type: 'scatter',
+                    name: name,
+                };
+                humidityData.push(hum);
             }
 
             Plotly.newPlot('tempDiv', temperatureData, {
@@ -49,15 +49,16 @@
                     title: 'Temperature'
                 }
             });
-            // Plotly.newPlot('humDiv', {
-            //     title: "Humidity over Time",
-            //       xaxis: {
-            //         title: 'Time'
-            //     },
-            //     yaxis: {
-            //         title: 'Humidity'
-            //     }
-            // });
+
+            Plotly.newPlot('humDiv', {
+                title: "Humidity over Time",
+                  xaxis: {
+                    title: 'Time'
+                },
+                yaxis: {
+                    title: 'Humidity'
+                }
+            });
         </script>
     </body>
 </html>
