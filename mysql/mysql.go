@@ -29,6 +29,7 @@ func NewConnection(dsn string) (*DB, error) {
 type Data struct {
 	ID     int64  `json:"id"`
 	Source string `json:"source"`
+	Name   string `json:"name"`
 	Type   string `json:"type"`
 	Value  string `json:"value"`
 
@@ -38,7 +39,7 @@ type Data struct {
 
 func (data *Data) Scan(rows *sql.Rows) error {
 	if err := rows.Scan(
-		&data.ID, &data.Source, &data.Type, &data.Value, &data.CreatedAt, &data.UpdatedAt,
+		&data.ID, &data.Source, &data.Name, &data.Type, &data.Value, &data.CreatedAt, &data.UpdatedAt,
 	); err != nil {
 		return err
 	}
@@ -47,13 +48,13 @@ func (data *Data) Scan(rows *sql.Rows) error {
 
 func (db *DB) SaveData(item *Data) (int64, error) {
 	// Prepare statement for inserting data
-	stmt, err := db.Prepare("INSERT INTO data( source, type, value ) VALUES( ?, ?, ? )")
+	stmt, err := db.Prepare("INSERT INTO data( source, name, type, value ) VALUES( ?, ?, ? )")
 	if err != nil {
 		panic(err.Error()) // TODO: proper error handling instead of panic in your app
 	}
 	defer stmt.Close() // Close the statement when we leave main() / the program terminates
 
-	res, err := stmt.Exec(item.Source, item.Type, item.Value)
+	res, err := stmt.Exec(item.Source, item.Name, item.Type, item.Value)
 	if err != nil {
 		panic(err.Error()) // TODO: proper error handling instead of panic in your app
 	}
@@ -63,7 +64,7 @@ func (db *DB) SaveData(item *Data) (int64, error) {
 
 func (db *DB) GetData() ([]*Data, error) {
 	// Prepare statement for reading data
-	stmt, err := db.Prepare("SELECT id, source, type, value, created_at, updated_at FROM data")
+	stmt, err := db.Prepare("SELECT id, source, name, type, value, created_at, updated_at FROM data")
 	if err != nil {
 		panic(err.Error()) // TODO: proper error handling instead of panic in your app
 	}

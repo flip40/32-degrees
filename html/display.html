@@ -20,22 +20,22 @@
 
             var temperatureData = []
             var humidityData = []
-            for (const [name, source] of Object.entries(plotData.sources)) {
+            for (const [source, data] of Object.entries(plotData.sources)) {
                 var temp = {
-                    x: source.temperature.times,
-                    y: source.temperature.values,
+                    x: data.temperature.times,
+                    y: data.temperature.values,
                     line: {shape: 'spline'},
                     type: 'scatter',
-                    name: name,
+                    name: data.name,
                 };
                 temperatureData.push(temp);
 
                 var hum = {
-                    x: source.humidity.times,
-                    y: source.humidity.values,
+                    x: data.humidity.times,
+                    y: data.humidity.values,
                     line: {shape: 'spline'},
                     type: 'scatter',
-                    name: name,
+                    name: data.name,
                 };
                 humidityData.push(hum);
             }

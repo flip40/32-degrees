@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -12,8 +11,9 @@ import (
 )
 
 const (
-	AddDataFieldType   = "type"
 	AddDataFieldSource = "source"
+	AddDataFieldName   = "name"
+	AddDataFieldType   = "type"
 	AddDataFieldValue  = "value"
 
 	DataTypeTemperature = "temperature"
@@ -21,8 +21,9 @@ const (
 )
 
 type DataFields struct {
-	Type   string
 	Source string
+	Name   string
+	Type   string
 	Value  string
 }
 
@@ -32,24 +33,29 @@ func DataFieldsFromRequest(r *http.Request) (*DataFields, error) {
 	item := &DataFields{}
 	item.Type = q.Get(AddDataFieldType)
 	if item.Type == "" {
-		return nil, errors.New(fmt.Sprintf("query field '%s' is required", AddDataFieldType))
+		return nil, fmt.Errorf("query field '%s' is required", AddDataFieldType)
 	} else {
 		switch item.Type {
 		case DataTypeTemperature, DataTypeHumidity:
 			// OK
 		default:
-			return nil, errors.New(fmt.Sprintf("type '%s' is invalid", item.Type))
+			return nil, fmt.Errorf("type '%s' is invalid", item.Type)
 		}
+	}
+
+	item.Name = q.Get(AddDataFieldName)
+	if item.Name == "" {
+		return nil, fmt.Errorf("query field '%s' is required", AddDataFieldName)
 	}
 
 	item.Source = q.Get(AddDataFieldSource)
 	if item.Source == "" {
-		return nil, errors.New(fmt.Sprintf("query field '%s' is required", AddDataFieldSource))
+		return nil, fmt.Errorf("query field '%s' is required", AddDataFieldSource)
 	}
 
 	item.Value = q.Get(AddDataFieldValue)
 	if item.Value == "" {
-		return nil, errors.New(fmt.Sprintf("query field '%s' is required", AddDataFieldValue))
+		return nil, fmt.Errorf("query field '%s' is required", AddDataFieldValue)
 	}
 
 	return item, nil
@@ -65,9 +71,10 @@ func (h *Handler) AddDataHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Debug logging to console
-	fmt.Printf("%s: %s, %s: %s, %s: %s\n", AddDataFieldType, fields.Type, AddDataFieldSource, fields.Source, AddDataFieldValue, fields.Value)
+	fmt.Printf("%s: %s, %s: %s, %s: %s, %s: %s\n", AddDataFieldType, fields.Type, AddDataFieldName, fields.Name, AddDataFieldSource, fields.Source, AddDataFieldValue, fields.Value)
 
 	if _, err := h.MySQL.SaveData(&mysql.Data{
+		Name:   fields.Name,
 		Source: fields.Source,
 		Type:   fields.Type,
 		Value:  fields.Value,
@@ -107,6 +114,7 @@ type PlotDataResponse struct {
 }
 
 type Values struct {
+	Name        string   `json:"name"`
 	Temperature PlotData `json:"temperature"`
 	Humidity    PlotData `json:"humidity"`
 }
@@ -117,12 +125,13 @@ type PlotData struct {
 
 // {												// PlotDataResponse
 // 	"sources": {									// PlotDataResponse.Sources
-// 		"device_1": {								// Values
+// 		"00:00:5e:00:53:af": {						// Values
+// 			"name": "device_1",						// Values.Name
 // 			"temperature": [						// Values.Temperature / PlotData
 // 				"values": [70],						// PlotData.Values
 // 				"times": ["2021-12-18 21:08:00"]	// PlotData.Times
 // 			],
-// 			"humidity": [
+// 			"humidity": [							// Values.Humidity / PlotData
 // 				"values": [100],
 // 				"times": ["2021-12-18 21:08:00"]
 // 			]
@@ -149,7 +158,9 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 	for _, row := range data {
 		source, ok := response.Sources[row.Source]
 		if !ok {
-			source = &Values{}
+			source = &Values{
+				Name: row.Name,
+			}
 		}
 
 		// omit duplicate values in a row as a test of display
@@ -186,7 +197,7 @@ func (h *Handler) GetPlotDataHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		response.Sources[row.Source] = source
+		response.Sources[row.Name] = source
 	}
 
 	responseBytes, err := json.Marshal(response)
